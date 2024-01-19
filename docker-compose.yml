@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    container_name: kong_postgres
+    image: postgres:16
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - ./_tmpdb/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "${POSTGRES_DATABASE}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    networks:
+      - kong-net
+  
+  kong:
+    image: kong:latest
+    depends_on:
+      - postgres
+    environment:
+      KONG_DATABASE: "${KONG_DATABASE}"
+      KONG_PG_HOST: postgres
+      KONG_PG_USER: "${POSTGRES_USER}"
+      KONG_PG_PASSWORD: "${POSTGRES_PASSWORD}"
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8443:8443"
+      - "8444:8444"
+    networks:
+      - kong-net
+  
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+
+networks:
+  kong-net:
